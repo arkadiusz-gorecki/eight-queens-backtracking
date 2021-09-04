@@ -1,3 +1,6 @@
+use backtracking::brute::*;
+
 fn main() {
-    println!("Hello, world!");
+    let mut board = BruteBoard::new();
+    board.play();
 }
