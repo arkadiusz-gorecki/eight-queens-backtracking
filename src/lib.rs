@@ -3,7 +3,6 @@ pub struct Queen {
     pub x: usize,
     pub y: usize,
 }
-
 impl Queen {
     pub fn new(x: usize, y: usize) -> Queen {
         Queen { x, y }
@@ -38,26 +37,28 @@ pub mod back {
     pub struct BackBoard {
         size: usize,
         pieces: Vec<Queen>,
+        solutions_found: u32,
     }
 
     impl BackBoard {
         pub fn new() -> BackBoard {
-            BackBoard { 
-                size: 5,
+            BackBoard {
+                size: 8,
                 pieces: Vec::new(),
+                solutions_found: 0,
             }
         }
-        pub fn play (&mut self) {
+        pub fn play(&mut self) {
             self.recur(0);
+            println!("Liczba rozwiazan: {}", self.solutions_found);
         }
         fn recur(&mut self, placed: usize) {
-            
-            // warunek podstawowy
+            // warunek zerowy
             if placed >= self.size {
                 self.print_result();
+                self.solutions_found += 1;
                 return;
             }
-            // self.print_result();
             // warunek normalny
             for i in 0..self.size {
                 let suggestion = Queen::new(placed, i);
@@ -65,28 +66,31 @@ pub mod back {
                     continue;
                 } else {
                     self.pieces.push(suggestion);
-                    self.recur(placed + 1 /*byczq*/);
+                    self.recur(placed + 1);
                     self.pieces.pop();
                 }
             }
         }
         fn attacked(&self, source: &Queen) -> bool {
             for target in self.pieces.iter() {
-                if source == target { continue; }
-                if source.can_attack(target) { return true; }
+                if source == target {
+                    continue;
+                }
+                if source.can_attack(target) {
+                    return true;
+                }
             }
             return false;
         }
         fn print_result(&self) {
             for i in 0..self.pieces.len() {
-                print!("{}", self.pieces.get(i).expect("print result, poza zasieg").y + 1);
+                print!(
+                    "{}",
+                    self.pieces.get(i).expect("print result, poza zasieg").y + 1
+                );
             }
             println!();
         }
-        // fn move_queen(&mut self, i: usize) {
-        //     self.pieces.get_mut(i).expect("Nie istnieje queen w vec, out of range!!")
-        //     .make_move(self.size);
-        // }
     }
 }
 
@@ -99,29 +103,39 @@ pub mod brute {
 
     impl BruteBoard {
         pub fn new() -> BruteBoard {
-            BruteBoard { 
-                size: 5,
+            BruteBoard {
+                size: 8,
                 pieces: vec![
                     Queen::new(0, 0),
                     Queen::new(1, 0),
                     Queen::new(2, 0),
                     Queen::new(3, 0),
                     Queen::new(4, 0),
-                    // Queen::new(5, 0),
-                    // Queen::new(6, 0),
-                    // Queen::new(7, 0)
-                ]
+                    Queen::new(5, 0),
+                    Queen::new(6, 0),
+                    Queen::new(7, 0),
+                ],
             }
         }
-        pub fn play (&mut self) {
-            for _i in 0..self.size {
-                for _j in 0..self.size {
-                    for _k in 0..self.size {
-                        for _l in 0..self.size {
+        pub fn play(&mut self) {
+            let mut solutions_found: u32 = 0;
+            for _ in 0..self.size {
+                for _ in 0..self.size {
+                    for _ in 0..self.size {
+                        for _ in 0..self.size {
                             for _ in 0..self.size {
-                                if !self.attacked() {
-                                    // print!("DOBRE -> : ");
-                                    self.print_result();
+                                for _ in 0..self.size {
+                                    for _ in 0..self.size {
+                                        for _ in 0..self.size {
+                                            if !self.attacked() {
+                                                solutions_found += 1;
+                                                self.print_result();
+                                            }
+                                            self.move_queen(7);
+                                        }
+                                        self.move_queen(6);
+                                    }
+                                    self.move_queen(5);
                                 }
                                 self.move_queen(4);
                             }
@@ -133,12 +147,17 @@ pub mod brute {
                 }
                 self.move_queen(0);
             }
+            println!("Liczba rozwiazan: {}", solutions_found);
         }
         fn attacked(&self) -> bool {
             for q1 in self.pieces.iter() {
                 for q2 in self.pieces.iter() {
-                    if q1 == q2 { continue; }
-                    if q1.can_attack(q2) { return true; }
+                    if q1 == q2 {
+                        continue;
+                    }
+                    if q1.can_attack(q2) {
+                        return true;
+                    }
                 }
             }
             false
@@ -150,8 +169,35 @@ pub mod brute {
             println!();
         }
         fn move_queen(&mut self, i: usize) {
-            self.pieces.get_mut(i).expect("Nie istnieje queen w vec, out of range!!")
-            .make_move(self.size);
+            self.pieces
+                .get_mut(i)
+                .expect("Nie istnieje queen w vec, out of range!!")
+                .make_move(self.size);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::back::*;
+    use crate::brute::*;
+    use std::time;
+
+    #[test]
+    fn bruteforce_time() {
+        let mut game = BruteBoard::new();
+        let start = time::Instant::now();
+        game.play();
+        let end = time::Instant::now();
+        println!("Brute force time: {:?}", end - start)
+    }
+
+    #[test]
+    fn backtracking_time() {
+        let mut game = BackBoard::new();
+        let start = time::Instant::now();
+        game.play();
+        let end = time::Instant::now();
+        println!("Backtracking time: {:?}", end - start)
     }
 }
