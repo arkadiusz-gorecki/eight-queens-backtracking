@@ -1,6 +1,6 @@
-use backtracking::brute::*;
+use backtracking::{back::*};
 
 fn main() {
-    let mut board = BruteBoard::new();
+    let mut board = BackBoard::new();
     board.play();
 }

@@ -14,17 +14,14 @@ impl Queen {
     pub fn y_set(&mut self, y: usize) {
         self.y = y;
     }
-    pub fn attacked(&self, target: &Queen) -> bool {
-        if self.x == target.x || self.y == target.y {
-            return true;
+    pub fn can_attack(&self, target: &Queen) -> bool {
+        let dx: i32 = (self.x as i32 - target.x as i32).abs();
+        let dy: i32 = (self.y as i32 - target.y as i32).abs();
+        if self.x == target.x || self.y == target.y || dx == dy {
+            true
+        } else {
+            false
         }
-        let dx: i32 = self.x as i32 - target.x as i32;
-        let dy: i32 = self.y as i32 - target.y as i32;
-        let a = i32::abs(dx / dy);
-        if a == 1 {
-            return true;
-        }
-            return false;
     }
     fn make_move(&mut self, size: usize) {
         //let q = self.pieces.get_mut(i).expect("Nie istnieje queen w vec, out of range!!");
@@ -33,6 +30,63 @@ impl Queen {
         } else {
             self.y_set(self.y + 1);
         }
+    }
+}
+
+pub mod back {
+    use crate::*;
+    pub struct BackBoard {
+        size: usize,
+        pieces: Vec<Queen>,
+    }
+
+    impl BackBoard {
+        pub fn new() -> BackBoard {
+            BackBoard { 
+                size: 5,
+                pieces: Vec::new(),
+            }
+        }
+        pub fn play (&mut self) {
+            self.recur(0);
+        }
+        fn recur(&mut self, placed: usize) {
+            
+            // warunek podstawowy
+            if placed >= self.size {
+                self.print_result();
+                return;
+            }
+            // self.print_result();
+            // warunek normalny
+            for i in 0..self.size {
+                let suggestion = Queen::new(placed, i);
+                if self.attacked(&suggestion) {
+                    continue;
+                } else {
+                    self.pieces.push(suggestion);
+                    self.recur(placed + 1 /*byczq*/);
+                    self.pieces.pop();
+                }
+            }
+        }
+        fn attacked(&self, source: &Queen) -> bool {
+            for target in self.pieces.iter() {
+                if source == target { continue; }
+                if source.can_attack(target) { return true; }
+            }
+            return false;
+        }
+        fn print_result(&self) {
+            for i in 0..self.pieces.len() {
+                print!("{}", self.pieces.get(i).expect("print result, poza zasieg").y + 1);
+            }
+            println!();
+        }
+        // fn move_queen(&mut self, i: usize) {
+        //     self.pieces.get_mut(i).expect("Nie istnieje queen w vec, out of range!!")
+        //     .make_move(self.size);
+        // }
     }
 }
 
@@ -84,7 +138,7 @@ pub mod brute {
             for q1 in self.pieces.iter() {
                 for q2 in self.pieces.iter() {
                     if q1 == q2 { continue; }
-                    if q1.attacked(q2) { return true; }
+                    if q1.can_attack(q2) { return true; }
                 }
             }
             false
